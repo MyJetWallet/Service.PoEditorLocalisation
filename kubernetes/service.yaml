@@ -1,10 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
   labels:
-    app: admindatasource
+    app: poeditorlocalisation
     environment: Development
-  name: admindatasource
+  name: poeditorlocalisation
   namespace: spot-services
 spec:
   ports:
@@ -17,6 +19,6 @@ spec:
     protocol: TCP
     targetPort: 80
   selector:
-    app: admindatasource
+    app: poeditorlocalisation
   sessionAffinity: None
   type: ClusterIP

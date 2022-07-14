@@ -2,12 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    description: services-admindatasource
+    description: services-poeditorlocalisation
   labels:
-    app: admindatasource
+    app: poeditorlocalisation
     environment: Development
     tier: Service
-  name: admindatasource
+  name: poeditorlocalisation
   namespace: spot-services
 spec:
   revisionHistoryLimit: 1
@@ -20,20 +20,20 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: admindatasource
+      app: poeditorlocalisation
   template:
     metadata:
       labels:
-        app: admindatasource
-      name: admindatasource
+        app: poeditorlocalisation
+      name: poeditorlocalisation
     spec:
       nodeSelector:
         agentpool: spot
       imagePullSecrets:
         - name: simple-trading
       containers:
-      - name: admindatasource
-        image: spotsimpleregistry.azurecr.io/spot/myjetwallet.service.admindatasource-test:latest
+      - name: poeditorlocalisation
+        image: spotsimpleregistry.azurecr.io/spot/myjetwallet.service.poeditorlocalisation:1.0.0
         imagePullPolicy: Always
         lifecycle:
           postStart:
@@ -68,10 +68,11 @@ spec:
             cpu: 100m 
         env:
         - name: SETTINGS_URL
-          value: "http://192.168.70.80:9899/AdminDatasource"
+          value: "http://192.168.70.80:9899/PoEditorLocalisation"
         - name: ConsoleOutputLogLevel
-          value: "Debug"
+          value: "Information"
         - name: ENV_INFO
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+
