@@ -96,11 +96,6 @@ namespace Service.PoEditorLocalisation.Services
 			return response;
 		}
 
-		private string GetLang(string defaultLang, string lang)
-		{
-			throw new System.NotImplementedException();
-		}
-
 		public async Task<DownloadGrpcResponse> DownloadAsync(ImportGrpcRequest request)
 		{
 			string language = request.Lang;
@@ -223,10 +218,10 @@ namespace Service.PoEditorLocalisation.Services
 				_logger.LogInformation("{cnt} {sqlName} entities updated.", smsTemplatesChanged, nameof(SmsTemplateMyNoSqlEntity));
 			}
 
-			if (smsTemplatesChanged > 0)
+			if (pushTemplatesChanged > 0)
 			{
 				await _pushTemplateWriter.CleanAndBulkInsertAsync(pushNoSqlEntities, DataSynchronizationPeriod.Min1);
-				_logger.LogInformation("{cnt} {sqlName} entities updated.", smsTemplatesChanged, nameof(PushTemplateNoSqlEntity));
+				_logger.LogInformation("{cnt} {sqlName} entities updated.", pushTemplatesChanged, nameof(PushTemplateNoSqlEntity));
 			}
 
 			return new DownloadGrpcResponse
