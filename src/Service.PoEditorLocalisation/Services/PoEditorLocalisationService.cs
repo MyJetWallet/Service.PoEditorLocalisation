@@ -198,8 +198,11 @@ namespace Service.PoEditorLocalisation.Services
 						}
 						else
 						{
-							entity.BodiesSerializable[key] = definition;
-							pushTemplatesChanged++;
+							if (!string.IsNullOrWhiteSpace(definition))
+							{
+								entity.BodiesSerializable[key] = definition;
+								pushTemplatesChanged++;
+							}
 						}
 					}
 				}
