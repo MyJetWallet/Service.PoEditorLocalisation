@@ -48,8 +48,7 @@ namespace Service.PoEditorLocalisation.Services
 			List<TemplateNoSqlEntity> messages = await _templateWriter.GetAsync();
 			foreach (TemplateNoSqlEntity msg in messages)
 			{
-				string key = msg.BodiesSerializable.Keys.FirstOrDefault(k => k.Equals($"{msg.DefaultBrand};-;{lang}", StringComparison.InvariantCultureIgnoreCase));
-				if (key != null && msg.BodiesSerializable.TryGetValue(key, out string body) && !body.StartsWith("Placeholder for"))
+				if (msg.BodiesSerializable.TryGetValue($"{msg.DefaultBrand};-;{lang.ToLower()}", out string body) && !body.StartsWith("Placeholder for"))
 					data.Add(new LocalDto(msg.TemplateId, body, MessageTemplateSource));
 			}
 
@@ -71,8 +70,7 @@ namespace Service.PoEditorLocalisation.Services
 			List<PushTemplateNoSqlEntity> push = await _pushTemplateWriter.GetAsync();
 			foreach (PushTemplateNoSqlEntity msg in push)
 			{
-				string key = msg.BodiesSerializable.Keys.FirstOrDefault(k => k.Equals($"{msg.DefaultBrand};-;{lang}", StringComparison.InvariantCultureIgnoreCase));
-				if (key != null && msg.BodiesSerializable.TryGetValue(key, out string body) && !body.StartsWith("Placeholder for"))
+				if (msg.BodiesSerializable.TryGetValue($"{msg.DefaultBrand};-;{lang.ToLower()}", out string body) && !body.StartsWith("Placeholder for"))
 					data.Add(new LocalDto(msg.RowKey, body, PushTemplateSource));
 			}
 
@@ -105,9 +103,10 @@ namespace Service.PoEditorLocalisation.Services
 
 		public async Task<DownloadGrpcResponse> DownloadAsync(ImportGrpcRequest request)
 		{
-			string lang = request.Lang;
+			string language = request.Lang;
+			string lang = language.ToLower();
 
-			DownloadResult result = await _poEditorSender.Download(lang.ToLower());
+			DownloadResult result = await _poEditorSender.Download(lang);
 
 			var response = new DownloadGrpcResponse
 			{
@@ -132,17 +131,29 @@ namespace Service.PoEditorLocalisation.Services
 			foreach (LocalDto item in results)
 			{
 				string term = item.GetTerm();
+				string definition = item.Definition;
 
 				if (item.Reference == MessageTemplateSource)
 				{
 					TemplateNoSqlEntity entity = templateNoSqlEntities.FirstOrDefault(e => e.TemplateId == term);
 					if (entity != null)
 					{
-						var key = $"{entity.DefaultBrand};-;{lang.ToLower()}";
-						if (entity.BodiesSerializable.ContainsKey(key) && entity.BodiesSerializable[key] != item.Definition)
+						var key = $"{entity.DefaultBrand};-;{lang}";
+						if (entity.BodiesSerializable.ContainsKey(key))
 						{
-							entity.BodiesSerializable[key] = item.Definition;
-							templatesChanged++;
+							if (entity.BodiesSerializable[key] != definition)
+							{
+								entity.BodiesSerializable[key] = definition;
+								templatesChanged++;
+							}
+						}
+						else
+						{
+							if (!string.IsNullOrWhiteSpace(definition))
+							{
+								entity.BodiesSerializable[key] = definition;
+								templatesChanged++;
+							}
 						}
 					}
 				}
@@ -151,14 +162,21 @@ namespace Service.PoEditorLocalisation.Services
 				{
 					SmsTemplateMyNoSqlEntity entity = smsNoSqlEntities
 						.FirstOrDefault(e => e.RowKey == term && e.Template.BrandLangBodies
-							.Any(b => b.Brand == e.Template.DefaultBrand && b.LangBodies.Any(lb => lb.Key == lang)));
-
+							.Any(b => b.Brand == e.Template.DefaultBrand && b.LangBodies.Any(lb => lb.Key == language)));
 					if (entity != null)
 					{
 						BrandLangBody langBody = entity.Template.BrandLangBodies.First(b => b.Brand == entity.Template.DefaultBrand);
-						if (langBody.LangBodies[lang] != item.Definition)
+						if (langBody.LangBodies.ContainsKey(language))
 						{
-							langBody.LangBodies[lang] = item.Definition;
+							if (langBody.LangBodies[language] != definition)
+							{
+								langBody.LangBodies[language] = definition;
+								smsTemplatesChanged++;
+							}
+						}
+						else
+						{
+							langBody.LangBodies[language] = definition;
 							smsTemplatesChanged++;
 						}
 					}
@@ -169,10 +187,18 @@ namespace Service.PoEditorLocalisation.Services
 					PushTemplateNoSqlEntity entity = pushNoSqlEntities.FirstOrDefault(e => e.RowKey == term);
 					if (entity != null)
 					{
-						var key = $"{entity.DefaultBrand};-;{lang.ToLower()}";
-						if (entity.BodiesSerializable.ContainsKey(key) && entity.BodiesSerializable[key] != item.Definition)
+						var key = $"{entity.DefaultBrand};-;{lang}";
+						if (entity.BodiesSerializable.ContainsKey(key))
 						{
-							entity.BodiesSerializable[key] = item.Definition;
+							if (entity.BodiesSerializable[key] != definition)
+							{
+								entity.BodiesSerializable[key] = definition;
+								pushTemplatesChanged++;
+							}
+						}
+						else
+						{
+							entity.BodiesSerializable[key] = definition;
 							pushTemplatesChanged++;
 						}
 					}
