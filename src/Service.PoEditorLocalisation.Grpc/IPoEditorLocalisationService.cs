@@ -12,5 +12,8 @@ namespace Service.PoEditorLocalisation.Grpc
 
 		[OperationContract]
 		Task<DownloadGrpcResponse> DownloadAsync(ExportGrpcRequest request);
+
+		[OperationContract]
+		Task<LanguagesGrpcResponse> GetLanguagesAsync();
 	}
 }

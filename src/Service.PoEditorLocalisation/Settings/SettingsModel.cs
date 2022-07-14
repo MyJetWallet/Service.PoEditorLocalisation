@@ -29,6 +29,9 @@ namespace Service.PoEditorLocalisation.Settings
 		[YamlProperty("PoEditorLocalisation.PoEditorDownloadUrl")]
 		public string PoEditorDownloadUrl { get; set; }
 
+		[YamlProperty("PoEditorLocalisation.PoEditorLanguagesUrl")]
+		public string PoEditorLanguagesUrl { get; set; }
+
 		[YamlProperty("PoEditorLocalisation.PoEditorBackendProjectId")]
 		public string PoEditorBackendProjectId { get; set; }
 	}

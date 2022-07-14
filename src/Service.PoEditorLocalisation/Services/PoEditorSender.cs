@@ -168,5 +168,65 @@ namespace Service.PoEditorLocalisation.Services
 				Results = items
 			};
 		}
+
+		public async Task<(string name, string code)[]> GetLanguages()
+		{
+			var multiForm = new MultipartFormDataContent();
+
+			var parameters = new Dictionary<string, string>
+			{
+				{"api_token", Program.Settings.PoEditorApiToken},
+				{"id", Program.Settings.PoEditorBackendProjectId}
+			};
+
+			foreach (KeyValuePair<string, string> keyValuePair in parameters)
+				multiForm.Add(new StringContent(keyValuePair.Value), keyValuePair.Key);
+
+			string downloadUrl = Program.Settings.PoEditorLanguagesUrl;
+
+			_logger.LogInformation("Request languages from PoEditor, url: {url}, params: {@params}", downloadUrl, parameters);
+
+			HttpResponseMessage response;
+
+			try
+			{
+				response = await new HttpClient().PostAsync(downloadUrl, multiForm);
+			}
+			catch (Exception ex)
+			{
+				string message = ex.Message;
+
+				_logger.LogError(message);
+
+				return Array.Empty<(string name, string code)>();
+			}
+
+			string responseContent = response.Content.ReadAsStringAsync().Result;
+			if (string.IsNullOrWhiteSpace(responseContent))
+			{
+				_logger.LogError("Error while get languages from PoEditor, no content recieved");
+
+				return Array.Empty<(string name, string code)>();
+			}
+
+			_logger.LogDebug("Recieved: {@data}", responseContent);
+
+			var responseData = JsonConvert.DeserializeObject<LanguagesResponseWrapper>(responseContent);
+			if (responseData == null)
+			{
+				_logger.LogError("Error while get languages from PoEditor, content: {content}", responseContent);
+
+				return Array.Empty<(string name, string code)>();
+			}
+
+			if (responseData.Response.IsFail())
+			{
+				_logger.LogError("Error get languages from PoEditor, reponse: {@response}", responseData);
+
+				return Array.Empty<(string name, string code)>();
+			}
+
+			return responseData.Result.Items.Select(dto => (dto.Name, dto.Code)).ToArray();
+		}
 	}
 }

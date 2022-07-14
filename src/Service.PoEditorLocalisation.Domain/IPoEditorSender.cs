@@ -9,5 +9,7 @@ namespace Service.PoEditorLocalisation.Domain
 		ValueTask<UploadResult> Upload(List<LocalDto> dtos, string lang);
 
 		Task<DownloadResult> Download(string lang);
+		
+		Task<(string name, string code)[]> GetLanguages();
 	}
 }

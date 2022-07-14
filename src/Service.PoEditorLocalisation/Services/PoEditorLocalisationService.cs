@@ -196,5 +196,19 @@ namespace Service.PoEditorLocalisation.Services
 				PushTemplatesChanged = pushTemplatesChanged
 			};
 		}
+
+		public async Task<LanguagesGrpcResponse> GetLanguagesAsync()
+		{
+			(string name, string code)[] result = await _poEditorSender.GetLanguages();
+
+			return new LanguagesGrpcResponse
+			{
+				Items = result.Select(tuple => new LanguageGrpcModel
+				{
+					Name = tuple.name,
+					Code = tuple.code
+				}).ToArray()
+			};
+		}
 	}
 }
