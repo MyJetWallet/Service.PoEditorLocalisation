@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -47,7 +48,11 @@ namespace Service.PoEditorLocalisation.Services
 			List<TemplateNoSqlEntity> messages = await _templateWriter.GetAsync();
 			foreach (TemplateNoSqlEntity msg in messages)
 			{
-				if (msg.BodiesSerializable.TryGetValue($"{msg.DefaultBrand};-;{lang.ToLower()}", out string body) && !body.StartsWith("Placeholder for"))
+				string msgLang = msg.BodiesSerializable.Keys.FirstOrDefault(k => k.Equals(lang, StringComparison.InvariantCultureIgnoreCase));
+				if (msgLang == null)
+					continue;
+
+				if (msg.BodiesSerializable.TryGetValue($"{msg.DefaultBrand};-;{msgLang}", out string body) && !body.StartsWith("Placeholder for"))
 					data.Add(new LocalDto(msg.TemplateId, body, MessageTemplateSource));
 			}
 
@@ -58,14 +63,22 @@ namespace Service.PoEditorLocalisation.Services
 				if (brand == null)
 					continue;
 
-				if (brand.LangBodies.TryGetValue(lang, out string body))
+				string msgLang = brand.LangBodies.Keys.FirstOrDefault(k => k.Equals(lang, StringComparison.InvariantCultureIgnoreCase));
+				if (msgLang == null)
+					continue;
+
+				if (brand.LangBodies.TryGetValue(msgLang, out string body))
 					data.Add(new LocalDto(msg.RowKey, body, SmsTemplateSource));
 			}
 
 			List<PushTemplateNoSqlEntity> push = await _pushTemplateWriter.GetAsync();
 			foreach (PushTemplateNoSqlEntity msg in push)
 			{
-				if (msg.BodiesSerializable.TryGetValue($"{msg.DefaultBrand};-;{lang.ToLower()}", out string body))
+				string msgLang = msg.BodiesSerializable.Keys.FirstOrDefault(k => k.Equals(lang, StringComparison.InvariantCultureIgnoreCase));
+				if (msgLang == null)
+					continue;
+
+				if (msg.BodiesSerializable.TryGetValue($"{msg.DefaultBrand};-;{msgLang}", out string body))
 					data.Add(new LocalDto(msg.RowKey, body, PushTemplateSource));
 			}
 
@@ -89,6 +102,11 @@ namespace Service.PoEditorLocalisation.Services
 			}
 
 			return response;
+		}
+
+		private string GetLang(string defaultLang, string lang)
+		{
+			throw new System.NotImplementedException();
 		}
 
 		public async Task<DownloadGrpcResponse> DownloadAsync(ImportGrpcRequest request)
