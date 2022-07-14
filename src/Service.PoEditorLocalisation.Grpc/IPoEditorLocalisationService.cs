@@ -11,7 +11,7 @@ namespace Service.PoEditorLocalisation.Grpc
 		Task<UploadGrpcResponse> UploadAsync(ExportGrpcRequest request);
 
 		[OperationContract]
-		Task<DownloadGrpcResponse> DownloadAsync(ExportGrpcRequest request);
+		Task<DownloadGrpcResponse> DownloadAsync(ImportGrpcRequest request);
 
 		[OperationContract]
 		Task<LanguagesGrpcResponse> GetLanguagesAsync();

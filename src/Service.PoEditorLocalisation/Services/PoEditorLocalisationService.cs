@@ -91,7 +91,7 @@ namespace Service.PoEditorLocalisation.Services
 			return response;
 		}
 
-		public async Task<DownloadGrpcResponse> DownloadAsync(ExportGrpcRequest request)
+		public async Task<DownloadGrpcResponse> DownloadAsync(ImportGrpcRequest request)
 		{
 			string lang = request.Lang;
 
