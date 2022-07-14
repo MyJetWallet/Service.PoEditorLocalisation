@@ -5,12 +5,12 @@ using Service.PoEditorLocalisation.Grpc.Models;
 namespace Service.PoEditorLocalisation.Grpc
 {
 	[ServiceContract]
-	public interface ILocalisationService
+	public interface IPoEditorLocalisationService
 	{
 		[OperationContract]
-		Task<OperationGrpcResponse> ExportAsync(ExportGrpcRequest request);
+		Task<UploadGrpcResponse> UploadAsync(ExportGrpcRequest request);
 
 		[OperationContract]
-		Task<OperationGrpcResponse> ImportAsync(ExportGrpcRequest request);
+		Task<DownloadGrpcResponse> DownloadAsync(ExportGrpcRequest request);
 	}
 }

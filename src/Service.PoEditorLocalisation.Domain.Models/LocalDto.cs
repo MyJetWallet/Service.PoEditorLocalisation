@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Service.PoEditorLocalisation.Domain.Models
 {
 	public class LocalDto
@@ -8,16 +10,23 @@ namespace Service.PoEditorLocalisation.Domain.Models
 
 		public LocalDto(string key, string value, string source)
 		{
-			term = $"{source}.{key}";
-			definition = value;
-			reference = source;
+			Term = $"{source}.{key}";
+			Definition = value;
+			Reference = source;
 		}
 
-		public string term { get; set; }
-		public string definition { get; set; }
-		public string reference { get; set; }
-		public string comment { get; set; }
+		[JsonProperty("term")]
+		public string Term { get; set; }
 
-		public string GetTerm() => term.Replace($"{reference}.", string.Empty);
+		[JsonProperty("definition")]
+		public string Definition { get; set; }
+
+		[JsonProperty("reference")]
+		public string Reference { get; set; }
+
+		[JsonProperty("comment")]
+		public string Comment { get; set; }
+
+		public string GetTerm() => Term.Replace($"{Reference}.", string.Empty);
 	}
 }

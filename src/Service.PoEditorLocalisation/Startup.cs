@@ -21,7 +21,7 @@ namespace Service.PoEditorLocalisation
         {
             app.ConfigureJetWallet(env, endpoints =>
             {
-                endpoints.MapGrpcSchema<LocalisationService, ILocalisationService>();
+                endpoints.MapGrpcSchema<PoEditorLocalisationService, IPoEditorLocalisationService>();
             });
         }
 

@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 namespace Service.PoEditorLocalisation.Grpc.Models
 {
 	[DataContract]
-	public class OperationGrpcResponse
+	public class DownloadGrpcResponse
 	{
 		[DataMember(Order = 1)]
 		public bool Successful { get; set; }

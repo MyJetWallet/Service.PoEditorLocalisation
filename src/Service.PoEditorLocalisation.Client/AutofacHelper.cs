@@ -11,7 +11,7 @@ namespace Service.PoEditorLocalisation.Client
         {
             var factory = new PoEditorLocalisationClientFactory(grpcServiceUrl);
 
-            builder.RegisterInstance(factory.GetLocalisationService()).As<ILocalisationService>().SingleInstance();
+            builder.RegisterInstance(factory.GetLocalisationService()).As<IPoEditorLocalisationService>().SingleInstance();
         }
     }
 }

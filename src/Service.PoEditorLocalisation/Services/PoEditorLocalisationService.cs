@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MyNoSqlServer.Abstractions;
-using Newtonsoft.Json;
 using Service.MessageTemplates.Domain.Models.NoSql;
 using Service.PoEditorLocalisation.Domain;
 using Service.PoEditorLocalisation.Domain.Models;
@@ -14,19 +13,19 @@ using Service.SmsSender.Domain.Models;
 
 namespace Service.PoEditorLocalisation.Services
 {
-	public class LocalisationService : ILocalisationService
+	public class PoEditorLocalisationService : IPoEditorLocalisationService
 	{
 		private const string MessageTemplateSource = "message-template";
 		private const string SmsTemplateSource = "sms";
 		private const string PushTemplateSource = "push";
 
-		private readonly ILogger<LocalisationService> _logger;
+		private readonly ILogger<PoEditorLocalisationService> _logger;
 		private readonly IPoEditorSender _poEditorSender;
 		private readonly IMyNoSqlServerDataWriter<TemplateNoSqlEntity> _templateWriter;
 		private readonly IMyNoSqlServerDataWriter<SmsTemplateMyNoSqlEntity> _smsTemplateWriter;
 		private readonly IMyNoSqlServerDataWriter<PushTemplateNoSqlEntity> _pushTemplateWriter;
 
-		public LocalisationService(ILogger<LocalisationService> logger,
+		public PoEditorLocalisationService(ILogger<PoEditorLocalisationService> logger,
 			IMyNoSqlServerDataWriter<TemplateNoSqlEntity> templateWriter,
 			IMyNoSqlServerDataWriter<SmsTemplateMyNoSqlEntity> smsTemplateWriter,
 			IMyNoSqlServerDataWriter<PushTemplateNoSqlEntity> pushTemplateWriter,
@@ -39,7 +38,7 @@ namespace Service.PoEditorLocalisation.Services
 			_poEditorSender = poEditorSender;
 		}
 
-		public async Task<OperationGrpcResponse> ExportAsync(ExportGrpcRequest request)
+		public async Task<UploadGrpcResponse> UploadAsync(ExportGrpcRequest request)
 		{
 			string lang = request.Lang;
 
@@ -70,58 +69,73 @@ namespace Service.PoEditorLocalisation.Services
 					data.Add(new LocalDto(msg.RowKey, body, PushTemplateSource));
 			}
 
-			string json = JsonConvert.SerializeObject(data);
+			UploadResult result = await _poEditorSender.Upload(data, lang.ToLower());
 
-			(bool result, string error) = await _poEditorSender.Upload(json, lang.ToLower());
-
-			return new OperationGrpcResponse
+			var response = new UploadGrpcResponse
 			{
-				Successful = result,
-				ErrorText = error
+				Successful = result.Successful,
+				ErrorText = result.ErrorText
 			};
+
+			UploadResponseWrapper.UploadResultDto results = result.Results;
+			if (results != null)
+			{
+				response.TermsAdded = results.Terms.Added;
+				response.TermsParsed = results.Terms.Parsed;
+				response.TermsDeleted = results.Terms.Deleted;
+				response.TranslationsAdded = results.Translations.Added;
+				response.TranslationsParsed = results.Translations.Parsed;
+				response.TranslationsDeleted = results.Translations.Deleted;
+			}
+
+			return response;
 		}
 
-		public async Task<OperationGrpcResponse> ImportAsync(ExportGrpcRequest request)
+		public async Task<DownloadGrpcResponse> DownloadAsync(ExportGrpcRequest request)
 		{
-			string lang = request.Lang.ToLower();
+			string lang = request.Lang;
 
-			(LocalDto[] items, string error) = await _poEditorSender.Download(lang);
+			DownloadResult result = await _poEditorSender.Download(lang.ToLower());
 
-			if (!string.IsNullOrWhiteSpace(error))
-				return new OperationGrpcResponse
-				{
-					Successful = false,
-					ErrorText = error
-				};
+			var response = new DownloadGrpcResponse
+			{
+				Successful = result.Successful,
+				ErrorText = result.ErrorText
+			};
 
-			_logger.LogInformation("Recieved {count} items info from PoEditor", items.Length);
+			LocalDto[] results = result.Results;
+			if (results == null)
+				return response;
+
+			_logger.LogInformation("Recieved {count} items info from PoEditor", results.Length);
 
 			List<TemplateNoSqlEntity> templateNoSqlEntities = await _templateWriter.GetAsync();
 			List<SmsTemplateMyNoSqlEntity> smsNoSqlEntities = await _smsTemplateWriter.GetAsync();
 			List<PushTemplateNoSqlEntity> pushNoSqlEntities = await _pushTemplateWriter.GetAsync();
 
-			int templatesChanged = 0;
-			int smsTemplatesChanged = 0;
-			int pushTemplatesChanged = 0;
+			var templatesChanged = 0;
+			var smsTemplatesChanged = 0;
+			var pushTemplatesChanged = 0;
 
-			foreach (LocalDto item in items)
+			foreach (LocalDto item in results)
 			{
 				string term = item.GetTerm();
 
-				if (item.definition == MessageTemplateSource)
+				if (item.Reference == MessageTemplateSource)
 				{
 					TemplateNoSqlEntity entity = templateNoSqlEntities.FirstOrDefault(e => e.TemplateId == term);
 					if (entity != null)
 					{
-						var key = $"{entity.DefaultBrand};-;{lang}";
-						if (entity.BodiesSerializable.ContainsKey(key) && entity.BodiesSerializable[key] != item.definition)
+						var key = $"{entity.DefaultBrand};-;{lang.ToLower()}";
+						if (entity.BodiesSerializable.ContainsKey(key) && entity.BodiesSerializable[key] != item.Definition)
 						{
-							entity.BodiesSerializable[key] = item.definition;
+							entity.BodiesSerializable[key] = item.Definition;
 							templatesChanged++;
 						}
 					}
 				}
-				if (item.definition == SmsTemplateSource)
+
+				else if (item.Reference == SmsTemplateSource)
 				{
 					SmsTemplateMyNoSqlEntity entity = smsNoSqlEntities
 						.FirstOrDefault(e => e.RowKey == term && e.Template.BrandLangBodies
@@ -130,22 +144,23 @@ namespace Service.PoEditorLocalisation.Services
 					if (entity != null)
 					{
 						BrandLangBody langBody = entity.Template.BrandLangBodies.First(b => b.Brand == entity.Template.DefaultBrand);
-						if (langBody.LangBodies[lang] != item.definition)
+						if (langBody.LangBodies[lang] != item.Definition)
 						{
-							langBody.LangBodies[lang] = item.definition;
+							langBody.LangBodies[lang] = item.Definition;
 							smsTemplatesChanged++;
 						}
 					}
 				}
-				if (item.definition == PushTemplateSource)
+
+				else if (item.Reference == PushTemplateSource)
 				{
 					PushTemplateNoSqlEntity entity = pushNoSqlEntities.FirstOrDefault(e => e.RowKey == term);
 					if (entity != null)
 					{
-						var key = $"{entity.DefaultBrand};-;{lang}";
-						if (entity.BodiesSerializable.ContainsKey(key) && entity.BodiesSerializable[key] != item.definition)
+						var key = $"{entity.DefaultBrand};-;{lang.ToLower()}";
+						if (entity.BodiesSerializable.ContainsKey(key) && entity.BodiesSerializable[key] != item.Definition)
 						{
-							entity.BodiesSerializable[key] = item.definition;
+							entity.BodiesSerializable[key] = item.Definition;
 							pushTemplatesChanged++;
 						}
 					}
@@ -158,20 +173,22 @@ namespace Service.PoEditorLocalisation.Services
 			if (templatesChanged > 0)
 			{
 				await _templateWriter.CleanAndBulkInsertAsync(templateNoSqlEntities, DataSynchronizationPeriod.Min1);
-				_logger.LogInformation("{cnt} {sqlName} items updated.", templatesChanged, nameof(TemplateNoSqlEntity));
+				_logger.LogInformation("{cnt} {sqlName} entities updated.", templatesChanged, nameof(TemplateNoSqlEntity));
 			}
+
 			if (smsTemplatesChanged > 0)
 			{
 				await _smsTemplateWriter.CleanAndBulkInsertAsync(smsNoSqlEntities, DataSynchronizationPeriod.Min1);
-				_logger.LogInformation("{cnt} {sqlName} items updated.", smsTemplatesChanged, nameof(SmsTemplateMyNoSqlEntity));
+				_logger.LogInformation("{cnt} {sqlName} entities updated.", smsTemplatesChanged, nameof(SmsTemplateMyNoSqlEntity));
 			}
+
 			if (smsTemplatesChanged > 0)
 			{
 				await _pushTemplateWriter.CleanAndBulkInsertAsync(pushNoSqlEntities, DataSynchronizationPeriod.Min1);
-				_logger.LogInformation("{cnt} {sqlName} items updated.", smsTemplatesChanged, nameof(PushTemplateNoSqlEntity));
+				_logger.LogInformation("{cnt} {sqlName} entities updated.", smsTemplatesChanged, nameof(PushTemplateNoSqlEntity));
 			}
 
-			return new OperationGrpcResponse
+			return new DownloadGrpcResponse
 			{
 				Successful = true,
 				TemplatesChanged = templatesChanged,

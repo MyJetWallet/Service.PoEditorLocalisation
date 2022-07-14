@@ -1,22 +1,22 @@
 ﻿using Newtonsoft.Json;
 
-namespace Service.PoEditorLocalisation.Models
+namespace Service.PoEditorLocalisation.Domain.Models
 {
-	public class UploadResponseWrapper
+	public class DownloadResponseWrapper
 	{
 		[JsonProperty("response")]
 		public ResponseDto Response { get; set; }
 
 		[JsonProperty("result")]
-		public UploadResultTermsDto Result { get; set; }
+		public DownloadResultTermsDto Result { get; set; }
 
-		public class UploadResultTermsDto
+		public class DownloadResultTermsDto
 		{
 			[JsonProperty("terms")]
-			public UploadResultTermInfoDto[] Terms { get; set; }
+			public DownloadResultTermInfoDto[] Terms { get; set; }
 		}
 
-		public class UploadResultTermInfoDto
+		public class DownloadResultTermInfoDto
 		{
 			[JsonProperty("term")]
 			public string Term { get; set; }
@@ -28,10 +28,10 @@ namespace Service.PoEditorLocalisation.Models
 			public string Comment { get; set; }
 
 			[JsonProperty("translation")]
-			public UploadResultTermTranslationInfoDto Translation { get; set; }
+			public DownloadResultTermTranslationInfoDto Translation { get; set; }
 		}
 
-		public class UploadResultTermTranslationInfoDto
+		public class DownloadResultTermTranslationInfoDto
 		{
 			[JsonProperty("content")]
 			public string Content { get; set; }

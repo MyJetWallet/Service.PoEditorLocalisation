@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Service.PoEditorLocalisation.Domain.Models;
 
 namespace Service.PoEditorLocalisation.Models
 {
@@ -6,5 +7,35 @@ namespace Service.PoEditorLocalisation.Models
 	{
 		[JsonProperty("response")]
 		public ResponseDto Response { get; set; }
+
+		[JsonProperty("result")]
+		public DownloadResultTermsDto Result { get; set; }
+
+		public class DownloadResultTermsDto
+		{
+			[JsonProperty("terms")]
+			public DownloadResultTermInfoDto[] Terms { get; set; }
+		}
+
+		public class DownloadResultTermInfoDto
+		{
+			[JsonProperty("term")]
+			public string Term { get; set; }
+
+			[JsonProperty("reference")]
+			public string Reference { get; set; }
+
+			[JsonProperty("comment")]
+			public string Comment { get; set; }
+
+			[JsonProperty("translation")]
+			public DownloadResultTermTranslationInfoDto Translation { get; set; }
+		}
+
+		public class DownloadResultTermTranslationInfoDto
+		{
+			[JsonProperty("content")]
+			public string Content { get; set; }
+		}
 	}
 }

@@ -26,8 +26,8 @@ namespace Service.PoEditorLocalisation.Settings
 		[YamlProperty("PoEditorLocalisation.PoEditorUploadUrl")]
 		public string PoEditorUploadUrl { get; set; }
 
-		[YamlProperty("PoEditorLocalisation.PoEditorExportUrl")]
-		public string PoEditorExportUrl { get; set; }
+		[YamlProperty("PoEditorLocalisation.PoEditorDownloadUrl")]
+		public string PoEditorDownloadUrl { get; set; }
 
 		[YamlProperty("PoEditorLocalisation.PoEditorBackendProjectId")]
 		public string PoEditorBackendProjectId { get; set; }

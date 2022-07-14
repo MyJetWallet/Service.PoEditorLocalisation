@@ -11,6 +11,6 @@ namespace Service.PoEditorLocalisation.Client
         {
         }
 
-        public ILocalisationService GetLocalisationService() => CreateGrpcService<ILocalisationService>();
+        public IPoEditorLocalisationService GetLocalisationService() => CreateGrpcService<IPoEditorLocalisationService>();
     }
 }
