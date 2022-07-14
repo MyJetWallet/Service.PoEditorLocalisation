@@ -48,11 +48,8 @@ namespace Service.PoEditorLocalisation.Services
 			List<TemplateNoSqlEntity> messages = await _templateWriter.GetAsync();
 			foreach (TemplateNoSqlEntity msg in messages)
 			{
-				string msgLang = msg.BodiesSerializable.Keys.FirstOrDefault(k => k.Equals(lang, StringComparison.InvariantCultureIgnoreCase));
-				if (msgLang == null)
-					continue;
-
-				if (msg.BodiesSerializable.TryGetValue($"{msg.DefaultBrand};-;{msgLang}", out string body) && !body.StartsWith("Placeholder for"))
+				string key = msg.BodiesSerializable.Keys.FirstOrDefault(k => k.Equals($"{msg.DefaultBrand};-;{lang}", StringComparison.InvariantCultureIgnoreCase));
+				if (key != null && msg.BodiesSerializable.TryGetValue(key, out string body) && !body.StartsWith("Placeholder for"))
 					data.Add(new LocalDto(msg.TemplateId, body, MessageTemplateSource));
 			}
 
@@ -74,11 +71,8 @@ namespace Service.PoEditorLocalisation.Services
 			List<PushTemplateNoSqlEntity> push = await _pushTemplateWriter.GetAsync();
 			foreach (PushTemplateNoSqlEntity msg in push)
 			{
-				string msgLang = msg.BodiesSerializable.Keys.FirstOrDefault(k => k.Equals(lang, StringComparison.InvariantCultureIgnoreCase));
-				if (msgLang == null)
-					continue;
-
-				if (msg.BodiesSerializable.TryGetValue($"{msg.DefaultBrand};-;{msgLang}", out string body))
+				string key = msg.BodiesSerializable.Keys.FirstOrDefault(k => k.Equals($"{msg.DefaultBrand};-;{lang}", StringComparison.InvariantCultureIgnoreCase));
+				if (key != null && msg.BodiesSerializable.TryGetValue(key, out string body) && !body.StartsWith("Placeholder for"))
 					data.Add(new LocalDto(msg.RowKey, body, PushTemplateSource));
 			}
 
